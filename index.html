@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>나의 학습시간 기록장</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom font and minimal base styling */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', 'Pretendard', sans-serif;
+            background-color: #f3f4f6; /* Tailwind gray-100 */
+        }
+        /* Hide number input arrows */
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-md bg-white rounded-2xl shadow-xl overflow-hidden">
+        <!-- Header -->
+        <div class="bg-indigo-600 px-6 py-5">
+            <h1 class="text-xl font-bold text-white text-center">나의 학습시간 기록장</h1>
+        </div>
+        <!-- Notice -->
+        <div class="bg-indigo-50 px-6 py-3 border-b border-indigo-100 flex items-start gap-2">
+            <svg class="w-5 h-5 text-indigo-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <p class="text-sm text-indigo-800">
+                본 서비스는 <strong>학교 Google 계정</strong>으로 로그인한 상태에서 이용해주세요.
+            </p>
+        </div>
+        <!-- Form -->
+        <!-- target="_blank" and rel="noopener" to open in a new tab securely. novalidate to use custom JS validation -->
+        <form id="studyForm" method="POST" target="_blank" rel="noopener" novalidate class="px-6 py-6 space-y-5">
+            <!-- Hidden input -->
+            <input type="hidden" name="appType" value="study">
+            <!-- 1. 가상 코드 -->
+            <div>
+                <label for="userCode" class="block text-sm font-semibold text-gray-700 mb-1">가상 코드 <span class="text-red-500">*</span></label>
+                <input type="text" id="userCode" name="userCode" placeholder="예: A1042" 
+                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-gray-800 bg-gray-50 uppercase placeholder-normal">
+                <p id="userCode-error" class="mt-1 text-sm text-red-500 hidden"></p>
+                <p class="mt-1 text-xs text-gray-500">대문자 1개와 숫자 4자리를 입력하세요.</p>
+            </div>
+            <!-- 2. 과목 선택 -->
+            <div>
+                <label for="subject" class="block text-sm font-semibold text-gray-700 mb-1">과목 <span class="text-red-500">*</span></label>
+                <select id="subject" name="subject" 
+                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-gray-800 bg-gray-50 appearance-none">
+                    <option value="" disabled selected>과목을 선택해주세요</option>
+                    <option value="수학">수학</option>
+                    <option value="영어">영어</option>
+                    <option value="정보">정보</option>
+                    <option value="기타">기타</option>
+                </select>
+                <p id="subject-error" class="mt-1 text-sm text-red-500 hidden"></p>
+            </div>
+            <!-- 3. 학습 시간 -->
+            <div>
+                <label for="minutes" class="block text-sm font-semibold text-gray-700 mb-1">학습 시간 (분) <span class="text-red-500">*</span></label>
+                <div class="relative">
+                    <input type="number" id="minutes" name="minutes" placeholder="예: 45" 
+                        class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-gray-800 bg-gray-50 pr-10">
+                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 font-medium text-sm">분</span>
+                </div>
+                <p id="minutes-error" class="mt-1 text-sm text-red-500 hidden"></p>
+                <p class="mt-1 text-xs text-gray-500">1 ~ 600 사이의 정수로 입력하세요.</p>
+            </div>
+            <!-- 4. 메모 -->
+            <div>
+                <div class="flex justify-between items-end mb-1">
+                    <label for="memo" class="block text-sm font-semibold text-gray-700">메모 <span class="text-gray-400 font-normal">(선택)</span></label>
+                    <span id="memoCount" class="text-xs text-gray-500">0 / 100자</span>
+                </div>
+                <textarea id="memo" name="memo" rows="3" placeholder="오늘 학습한 내용에 대해 간단히 메모를 남겨보세요." 
+                    class="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-gray-800 bg-gray-50 resize-none"></textarea>
+                <p id="memo-error" class="mt-1 text-sm text-red-500 hidden"></p>
+            </div>
+            <!-- Global Message -->
+            <div id="global-message" role="status" aria-live="polite" class="hidden rounded-lg p-4 text-sm font-medium"></div>
+            <!-- Submit Button -->
+            <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 px-4 rounded-lg shadow-md transition duration-200 active:scale-[0.98]">
+                기록 제출하기
+            </button>
+        </form>
+    </div>
+    <script>
+        // 학교 도메인 사용자용 웹앱 주소
+        const GAS_WEB_APP_URL = "https://script.google.com/a/macros/hcu.hs.kr/s/AKfycbx52t2EoR0S3cm87i_ptCkxJii3JkED6AHWFNiCK1Rvf5E_b4ri5YGdRoZtVNA8nAG1Aw/exec";
+        const form = document.getElementById('studyForm');
+        const userCodeInput = document.getElementById('userCode');
+        const memoInput = document.getElementById('memo');
+        const memoCount = document.getElementById('memoCount');
+        const globalMessage = document.getElementById('global-message');
+        // 오류 메시지 표시 함수
+        function showError(fieldId, message) {
+            const errorEl = document.getElementById(`${fieldId}-error`);
+            const inputEl = document.getElementById(fieldId);
+            if (errorEl && inputEl) {
+                errorEl.textContent = message;
+                errorEl.classList.remove('hidden');
+                inputEl.classList.add('border-red-500', 'bg-red-50');
+                inputEl.classList.remove('border-gray-300', 'bg-gray-50');
+            }
+        }
+        // 모든 오류 메시지 초기화
+        function clearErrors() {
+            document.querySelectorAll('[id$="-error"]').forEach(el => {
+                el.textContent = '';
+                el.classList.add('hidden');
+            });
+            document.querySelectorAll('input, select, textarea').forEach(el => {
+                el.classList.remove('border-red-500', 'bg-red-50');
+                el.classList.add('border-gray-300', 'bg-gray-50');
+            });
+            globalMessage.className = 'hidden rounded-lg p-4 text-sm font-medium';
+            globalMessage.textContent = '';
+        }
+        // 가상 코드 실시간 처리 (공백 제거 및 대문자 변환)
+        userCodeInput.addEventListener('input', function(e) {
+            this.value = this.value.trim().toUpperCase();
+        });
+        userCodeInput.addEventListener('blur', function(e) {
+            this.value = this.value.trim().toUpperCase();
+        });
+        // 메모 글자 수 실시간 표시 (앞뒤 공백 제외한 길이 기준)
+        memoInput.addEventListener('input', function() {
+            const trimmedLength = this.value.trim().length;
+            memoCount.textContent = `${trimmedLength} / 100자`;
+            if (trimmedLength > 100) {
+                memoCount.classList.add('text-red-500');
+                memoCount.classList.remove('text-gray-500');
+            } else {
+                memoCount.classList.remove('text-red-500');
+                memoCount.classList.add('text-gray-500');
+            }
+        });
+        // 폼 제출 이벤트
+        form.addEventListener('submit', function(e) {
+            // 기본 제출 차단 (유효성 검사 후 통과 시 수동 처리)
+            e.preventDefault(); 
+            clearErrors();
+            let isValid = true;
+            // 1. 가상 코드 검사
+            const codeVal = userCodeInput.value.trim().toUpperCase();
+            userCodeInput.value = codeVal;
+            const codeRegex = /^[A-Z]\d{4}$/; // 대문자 1개 + 숫자 4개 (C9999 포함)
+            if (!codeVal) {
+                showError('userCode', '가상 코드를 입력해주세요.');
+                isValid = false;
+            } else if (!codeRegex.test(codeVal)) {
+                showError('userCode', '올바른 형식이 아닙니다. (예: A1042, C9999)');
+                isValid = false;
+            }
+            // 2. 과목 검사
+            const subjectVal = document.getElementById('subject').value;
+            if (!['수학', '영어', '정보', '기타'].includes(subjectVal)) {
+                showError('subject', '과목을 선택해주세요.');
+                isValid = false;
+            }
+            // 3. 학습 시간 검사
+            const minutesVal = document.getElementById('minutes').value.trim();
+            const minutesNum = Number(minutesVal);
+            if (!minutesVal) {
+                showError('minutes', '학습 시간을 입력해주세요.');
+                isValid = false;
+            } else if (!/^\d+$/.test(minutesVal) || !Number.isInteger(minutesNum) || minutesNum < 1 || minutesNum > 600) {
+                showError('minutes', '1에서 600 사이의 정수를 입력해주세요.');
+                isValid = false;
+            }
+            // 4. 메모 검사 (앞뒤 공백 제외 100자 이하)
+            const memoVal = memoInput.value.trim();
+            if (memoVal.length > 100) {
+                showError('memo', '메모는 앞뒤 공백 제외 100자 이하로 작성해주세요.');
+                isValid = false;
+            }
+            // 검사 실패 시 제출 중단
+            if (!isValid) return;
+            // 검사 통과 시 서버 주소 확인
+            if (!GAS_WEB_APP_URL || GAS_WEB_APP_URL.trim() === "") {
+                // 서버 주소가 없을 때 안내 메시지만 표시 (실제 전송 X, 저장 완료 표시 X)
+                globalMessage.textContent = '입력 검사는 통과했습니다. 서버 주소를 설정하세요.';
+                globalMessage.classList.remove('hidden');
+                globalMessage.classList.add('bg-blue-100', 'text-blue-800', 'border', 'border-blue-200');
+                return;
+            }
+            // 모든 검사 통과 및 서버 주소가 있을 경우
+            // form의 action을 설정하고 강제 제출 실행
+            let serverUrl;
+            try {
+                serverUrl = new URL(GAS_WEB_APP_URL.trim());
+                if (serverUrl.protocol !== 'https:' || serverUrl.hostname !== 'script.google.com' ||
+                    serverUrl.port || serverUrl.username || serverUrl.password || serverUrl.search || serverUrl.hash ||
+                    !/^\/(?:macros\/s|a\/macros\/[^/]+\/s)\/[A-Za-z0-9_-]+\/exec$/.test(serverUrl.pathname)) throw new Error('URL');
+            } catch {
+                globalMessage.textContent = '서버 주소를 확인하세요. Apps Script 배포 주소(/exec)가 필요합니다.';
+                globalMessage.classList.remove('hidden');
+                return;
+            }
+            memoInput.value = memoVal;
+            form.action = serverUrl.href;
+            form.submit();
+            // 주의: 실제 제출이 이루어지고 새 창으로 결과가 넘어가기 때문에, 
+            // 원래 창에서는 '저장 완료' 등의 가짜 응답을 표시하지 않습니다.
+        });
+    </script>
+</body>
+</html>
